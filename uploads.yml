@@ -1,0 +1,33 @@
+---
+- name: Sync {{ site }} UPLOADS between development <-> {{ env }} environments
+  hosts: web:&{{ env }}
+  remote_user: "{{ web_user }}"
+
+  vars:
+    project: "{{ wordpress_sites[site] }}"
+    project_current: "{{ www_root }}/{{ site }}/current"
+    project_local_path: "{{ (lookup('env', 'USER') == 'vagrant') | ternary(project_current, project.local_path) }}"
+
+  tasks:
+  - name: Abort if environment variable is equal to development
+    fail:
+      msg: "ERROR: development is not a valid environment for this mode (you can't push/pull from development to development)."
+    when: env == "development"
+
+  - name: Pull uploads from {{ env }}
+    synchronize:
+      src: "{{ project_current }}/web/app/uploads/"
+      dest: "{{ project_local_path }}/web/app/uploads/"
+      mode: pull
+      recursive: yes
+      rsync_opts: --exclude=.DS_Store
+    when: mode is not defined or mode == "pull"
+
+  - name: Push uploads to {{ env }}
+    synchronize:
+      src: "{{ project_local_path }}/web/app/uploads/"
+      dest: "{{ project_current }}/web/app/uploads/"
+      mode: push
+      recursive: yes
+      rsync_opts: --exclude=.DS_Store
+    when: mode is defined and mode == "push"

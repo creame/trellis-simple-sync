@@ -1,0 +1,106 @@
+---
+- name: Sync {{ site }} DATABASE between development <-> {{ env }} environments
+  hosts: web:&{{ env }}
+  remote_user: "{{ web_user }}"
+
+  vars:
+    project: "{{ wordpress_sites[site] }}"
+    project_current: "{{ www_root }}/{{ site }}/current"
+    project_local_path: "{{ (lookup('env', 'USER') == 'vagrant') | ternary(project_current, project.local_path) }}"
+    sync_file: "{{ site | regex_replace('\\.+', '_') }}_db_sync.sql.gz"
+    backup_file: "{{ site | regex_replace('\\.+', '_') }}_db_backup.sql.gz"
+    dev_host: "{{ groups['development'] | first }}"
+    url_dev: "{{ hostvars[dev_host].wordpress_sites[site].ssl.enabled | ternary('https', 'http') }}://{{ hostvars[dev_host].wordpress_sites[site].site_hosts.0.canonical }}"
+    url_env: "{{ project.ssl.enabled | ternary('https', 'http') }}://{{ project.site_hosts.0.canonical }}"
+
+  tasks:
+    - name: Abort if environment variable is equal to development
+      fail:
+        msg: "ERROR: development is not a valid environment for this mode (you can't push/pull from development to development)."
+      when: env == "development"
+
+    # PULL database
+    - block:
+      - name: PULL > Export {{ env }} database
+        shell: wp db export - | gzip > {{ sync_file }}
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PULL > Pull dump file from {{ env }} to development
+        fetch:
+          src: "{{ project_current }}/{{ sync_file }}"
+          dest: "{{ project_local_path }}/"
+          flat: yes
+
+      - name: PULL > Delete dump file from {{ env }}
+        file:
+          state: absent
+          path: "{{ project_current }}/{{ sync_file }}"
+
+      - name: PULL > Backup development database
+        connection: local
+        shell: vagrant ssh -- 'cd {{ project_current }} && wp db export - | gzip > {{ backup_file }}'
+
+      - name: PULL > Reset development database
+        connection: local
+        shell: vagrant ssh -- 'cd {{ project_current }} && wp db reset --yes'
+
+      - name: PULL > Import database dump on development
+        connection: local
+        shell: vagrant ssh -- 'cd {{ project_current }} && gzip -c -d {{ sync_file }} | wp db import -'
+
+      - name: PULL > Delete dump file from development
+        connection: local
+        file:
+          state: absent
+          path: "{{ project_local_path }}/{{ sync_file }}"
+
+      - name: PULL > Search for {{ url_env }} and replace with {{ url_dev }} on development
+        connection: local
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables"
+
+      when: mode is not defined or mode == "pull"
+
+    # PUSH database
+    - block:
+      - name: PUSH > Export development database
+        connection: local
+        shell: vagrant ssh -- 'cd {{ project_current }} && wp db export - | gzip > {{ sync_file }}'
+
+      - name: PUSH > Push dump file from development to {{ env }}
+        copy:
+          src: "{{ project_local_path }}/{{ sync_file }}"
+          dest: "{{ project_current }}/"
+
+      - name: PUSH > Delete dump file from development
+        connection: local
+        file:
+          state: absent
+          path: "{{ project_local_path }}/{{ sync_file }}"
+
+      - name: PUSH > Backup {{ env }} database
+        shell: wp db export - | gzip > {{ backup_file }}
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Reset {{ env }} database
+        command: wp db reset --yes
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Import database dump on {{ env }}
+        shell: gzip -c -d {{ sync_file }} | wp db import -
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Delete dump file from {{ env }}
+        file:
+          state: absent
+          path: "{{ project_current }}/{{ sync_file }}"
+
+      - name: PUSH > Search for {{ url_dev }} and replace with {{ url_env }} on {{ env }}
+        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables
+        args:
+          chdir: "{{ project_current }}"
+
+      when: mode is defined and mode == "push"
