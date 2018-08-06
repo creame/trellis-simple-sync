@@ -10,7 +10,7 @@ Just copy and run without any extra configuration.
 ## Usage
 Run `./bin/sync.sh <environment> <site name> <type> <mode>`
 
-* Available `<type>` options: `uploads`, `database`
+* Available `<type>` options: `uploads`, `database`, `all`
 * Available `<mode>` options: `push`, `pull`
 * The `push` is for upload data from development and update selected environment, and the `pull` for download data from selected environment and update development.
 * `uploads` sync is not destructive, it only adds or update new files, don't delete missing files.
@@ -27,7 +27,8 @@ You can use alias for a shorter or more intuitive commands
 
 Examples:\
 `./bin/sync.sh stag example.com db up`\
-`./bin/sync.sh prod example.com media down`
+`./bin/sync.sh prod example.com media down`\
+`./bin/sync.sh prod example.com all up`
 
 ## Notes
 * Tested up to Ansible 2.6.1

@@ -10,7 +10,7 @@ show_usage() {
 
 <environment> is the environment to deploy to ("staging", "production", etc)
 <site name> is the WordPress site to deploy (name defined in "wordpress_sites")
-<type> is what we go to sync ("uploads" or "database")
+<type> is what we go to sync ("uploads", "database" or "all")
 <mode> is the sync mode ("pull" or "push")
 
 Available environments:
@@ -28,7 +28,7 @@ Examples:
   sync staging example.com database push
   sync production example.com db pull
   sync staging example.com uploads pull
-  sync prod example.com media up
+  sync prod example.com all up
 "
 }
 
@@ -78,8 +78,8 @@ if [[ ! -e $HOSTS_FILE ]]; then
   exit 1
 fi
 
-if [[ $TYPE != "database" && $TYPE != "uploads" ]]; then
-  echo "Error: '$TYPE' is not a valid type (uploads or media, database or db)."
+if [[ $TYPE != "database" && $TYPE != "uploads" && $TYPE != "all" ]]; then
+  echo "Error: '$TYPE' is not a valid type (uploads or media, database or db, all)."
   exit 1
 fi
 
@@ -90,6 +90,9 @@ fi
 
 if [[ $TYPE = database ]]; then
   $DATABASE_CMD
+elif [[ $TYPE = uploads ]]; then
+  $UPLOADS_CMD
 else
   $UPLOADS_CMD
+  $DATABASE_CMD
 fi
