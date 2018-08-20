@@ -10,8 +10,10 @@
     sync_file: "{{ site | regex_replace('\\.+', '_') }}_db_sync.sql.gz"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_db_backup.sql.gz"
     dev_host: "{{ groups['development'] | first }}"
-    url_dev: "{{ hostvars[dev_host].wordpress_sites[site].ssl.enabled | ternary('https', 'http') }}://{{ hostvars[dev_host].wordpress_sites[site].site_hosts.0.canonical }}"
-    url_env: "{{ project.ssl.enabled | ternary('https', 'http') }}://{{ project.site_hosts.0.canonical }}"
+    domain_dev: "{{ hostvars[dev_host].wordpress_sites[site].site_hosts.0.canonical }}"
+    domain_env: "{{ project.site_hosts.0.canonical }}"
+    url_dev: "{{ hostvars[dev_host].wordpress_sites[site].ssl.enabled | ternary('https', 'http') }}://{{ domain_dev }}"
+    url_env: "{{ project.ssl.enabled | ternary('https', 'http') }}://{{ domain_env }}"
 
   tasks:
     - name: Abort if environment variable is equal to development
@@ -59,6 +61,10 @@
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables"
 
+      - name: PULL > Search for //{{ domain_env }} and replace with //{{ domain_dev }} on development
+        connection: local
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables"
+
       when: mode is not defined or mode == "pull"
 
     # PUSH database
@@ -100,6 +106,11 @@
 
       - name: PUSH > Search for {{ url_dev }} and replace with {{ url_env }} on {{ env }}
         command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Search for //{{ domain_dev }} and replace with //{{ domain_env }} on {{ env }}
+        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables
         args:
           chdir: "{{ project_current }}"
 
