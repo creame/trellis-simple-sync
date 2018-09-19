@@ -65,6 +65,10 @@
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables"
 
+      - name: PULL > Cache flush on development
+        connection: local
+        shell: vagrant ssh -- "cd {{ project_current }} && wp cache flush"
+
       when: mode is not defined or mode == "pull"
 
     # PUSH database
@@ -111,6 +115,11 @@
 
       - name: PUSH > Search for //{{ domain_dev }} and replace with //{{ domain_env }} on {{ env }}
         command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Cache flush on {{ env }}
+        command: wp cache flush
         args:
           chdir: "{{ project_current }}"
 
