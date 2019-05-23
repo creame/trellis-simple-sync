@@ -5,7 +5,7 @@ Just copy and run without any extra configuration.
 ## Installation
 1. Copy `database.yml` and `uploads.yml` files into Trellis root folder
 2. Copy `bin/sync.sh` files into Trellis bin folder
-3. (Optional) Add `*_db_backup.sql.gz` to your Bedrock `.gitignore` file
+3. (Optional) Add `db-backup-*.sql.gz` to your Bedrock `.gitignore` file
 
 ## Usage
 Run `./bin/sync.sh <environment> <site name> <type> <mode>`
@@ -14,6 +14,7 @@ Run `./bin/sync.sh <environment> <site name> <type> <mode>`
 * Available `<mode>` options: `push`, `pull`
 * The `push` is for upload data from development and update selected environment, and the `pull` for download data from selected environment and update development.
 * `uploads` sync is not destructive, it only adds or update new files, don't delete missing files.
+* On every database sync a datetimed backup `db-backup-YYYYMMDDTHHMMSS.sql.gz` is saved before import data.
 
 ## Aliases
 You can use alias for a shorter or more intuitive commands
@@ -33,8 +34,8 @@ Examples:\
 ## Notes
 * Tested up to Ansible 2.6.1
 * For database sync the development vagrant VM must be powered on every time you run a command
-* On every database command a `sitename_db_backup.sql.gz` file is automatically created inside destination environment Bedrock folder. In development, if you don't want it to be saved in the repository:
-    * You can add `*_db_backup.sql.gz` to your Bedrock `.gitignore` file
+* On every database sync a `db-backup-YYYYMMDDTHHMMSS.sql.gz` file is automatically created inside destination environment Bedrock folder. In development, if you don't want it to be saved in the repository:
+    * You can add `db-backup-*.sql.gz` to your Bedrock `.gitignore` file
     * Or you can comment `PULL > Backup development database` task on `database.yml`
 * If your site use Elementor, uncomment "Replace Elementor urls" tasks on `database.yml`
 
