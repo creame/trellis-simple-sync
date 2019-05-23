@@ -36,6 +36,7 @@ Examples:\
 * On every database command a `sitename_db_backup.sql.gz` file is automatically created inside destination environment Bedrock folder. In development, if you don't want it to be saved in the repository:
     * You can add `*_db_backup.sql.gz` to your Bedrock `.gitignore` file
     * Or you can comment `PULL > Backup development database` task on `database.yml`
+* If your site use Elementor, uncomment "Replace Elementor urls" tasks on `database.yml`
 
 ## Contribute
 * Anyone is welcome to contribute to the plugin.

@@ -51,19 +51,23 @@
         connection: local
         shell: vagrant ssh -- 'cd {{ project_current }} && gzip -c -d {{ sync_file }} | wp db import -'
 
-      - name: PULL > Delete dump file from development
+      - name: PULL > Delete dump file on development
         connection: local
         file:
           state: absent
           path: "{{ project_local_path }}/{{ sync_file }}"
 
-      - name: PULL > Search for {{ url_env }} and replace with {{ url_dev }} on development
+      - name: PULL > Replace urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables"
 
-      - name: PULL > Search for //{{ domain_env }} and replace with //{{ domain_dev }} on development
+      - name: PULL > Replace protocol-relative urls "//{{ domain_env }}" => "//{{ domain_dev }}" on development
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables"
+
+      # - name: PULL > Replace Elementor urls "{{ url_env }}" => "{{ url_dev }}" on development
+      #   connection: local
+      #   shell: vagrant ssh -- "cd {{ project_current }} && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}'"
 
       - name: PULL > Cache flush on development
         connection: local
@@ -103,20 +107,25 @@
         args:
           chdir: "{{ project_current }}"
 
-      - name: PUSH > Delete dump file from {{ env }}
+      - name: PUSH > Delete dump file on {{ env }}
         file:
           state: absent
           path: "{{ project_current }}/{{ sync_file }}"
 
-      - name: PUSH > Search for {{ url_dev }} and replace with {{ url_env }} on {{ env }}
+      - name: PUSH > Replace urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
         command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables
         args:
           chdir: "{{ project_current }}"
 
-      - name: PUSH > Search for //{{ domain_dev }} and replace with //{{ domain_env }} on {{ env }}
+      - name: PUSH > Replace protocol-relative urls "//{{ domain_dev }}" => "//{{ domain_env }}" on {{ env }}
         command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables
         args:
           chdir: "{{ project_current }}"
+
+      # - name: PUSH > Replace Elementor urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
+      #   command: wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}'
+      #   args:
+      #     chdir: "{{ project_current }}"
 
       - name: PUSH > Cache flush on {{ env }}
         command: wp cache flush
