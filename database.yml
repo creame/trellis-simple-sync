@@ -65,9 +65,9 @@
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables"
 
-      # - name: PULL > Replace Elementor urls "{{ url_env }}" => "{{ url_dev }}" on development
-      #   connection: local
-      #   shell: vagrant ssh -- "cd {{ project_current }} && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}'"
+      - name: PULL > Replace Elementor urls "{{ url_env }}" => "{{ url_dev }}" on development
+        connection: local
+        shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}' || cd ."
 
       - name: PULL > Cache flush on development
         connection: local
@@ -122,10 +122,10 @@
         args:
           chdir: "{{ project_current }}"
 
-      # - name: PUSH > Replace Elementor urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
-      #   command: wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}'
-      #   args:
-      #     chdir: "{{ project_current }}"
+      - name: PUSH > Replace Elementor urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
+        shell: wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}' || cd .
+        args:
+          chdir: "{{ project_current }}"
 
       - name: PUSH > Cache flush on {{ env }}
         command: wp cache flush
