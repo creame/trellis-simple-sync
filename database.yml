@@ -45,7 +45,7 @@
 
       - name: PULL > Reset development database
         connection: local
-        shell: vagrant ssh -- 'cd {{ project_current }} && wp db reset --yes'
+        shell: vagrant ssh -- 'cd {{ project_current }} && wp db reset --yes --skip-plugins --skip-themes'
 
       - name: PULL > Import database dump on development
         connection: local
@@ -59,15 +59,15 @@
 
       - name: PULL > Replace urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables"
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables --skip-plugins --skip-themes"
 
       - name: PULL > Replace protocol-relative urls "//{{ domain_env }}" => "//{{ domain_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables"
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables --skip-plugins --skip-themes"
 
       - name: PULL > Replace Elementor urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}' || cd ."
+        shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}' --skip-themes || cd ."
 
       - name: PULL > Cache flush on development
         connection: local
@@ -98,7 +98,7 @@
           chdir: "{{ project_current }}"
 
       - name: PUSH > Reset {{ env }} database
-        command: wp db reset --yes
+        command: wp db reset --yes --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
@@ -113,17 +113,17 @@
           path: "{{ project_current }}/{{ sync_file }}"
 
       - name: PUSH > Replace urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
-        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables
+        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
       - name: PUSH > Replace protocol-relative urls "//{{ domain_dev }}" => "//{{ domain_env }}" on {{ env }}
-        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables
+        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
       - name: PUSH > Replace Elementor urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
-        shell: wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}' || cd .
+        shell: wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}' --skip-themes || cd .
         args:
           chdir: "{{ project_current }}"
 
