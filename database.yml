@@ -65,6 +65,10 @@
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables --skip-plugins --skip-themes"
 
+      - name: PULL > Replace emails "@{{ domain_env }}" => "@{{ domain_dev }}" on development
+        connection: local
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '@{{ domain_env }}' '@{{ domain_dev }}' --all-tables --skip-plugins --skip-themes"
+
       - name: PULL > Replace Elementor urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}' --skip-themes || cd ."
@@ -119,6 +123,11 @@
 
       - name: PUSH > Replace protocol-relative urls "//{{ domain_dev }}" => "//{{ domain_env }}" on {{ env }}
         command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables --skip-plugins --skip-themes
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Replace emails "@{{ domain_dev }}" => "@{{ domain_env }}" on {{ env }}
+        command: wp search-replace '@{{ domain_dev }}' '@{{ domain_env }}' --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
