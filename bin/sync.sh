@@ -39,10 +39,11 @@ do
   [[ $arg = -h ]] && { show_usage; exit 0; }
 done
 
-ENV="$1";
-SITE="$2";
-TYPE="$3";
-MODE="$4";
+ENV="$1"; shift
+SITE="$1"; shift
+TYPE="$1"; shift
+MODE="$1"; shift
+EXTRA_PARAMS=$@
 
 # allow use of abbreviations of environments
 if [[ $ENV = p || $ENV = prod ]]; then
@@ -65,8 +66,8 @@ elif [[ $MODE = up ]]; then
   MODE="push"
 fi
 
-DATABASE_CMD="ansible-playbook database.yml -e env=$ENV -e site=$SITE -e mode=$MODE"
-UPLOADS_CMD="ansible-playbook uploads.yml -e env=$ENV -e site=$SITE -e mode=$MODE"
+DATABASE_CMD="ansible-playbook database.yml -e env=$ENV -e site=$SITE -e mode=$MODE $EXTRA_PARAMS"
+UPLOADS_CMD="ansible-playbook uploads.yml -e env=$ENV -e site=$SITE -e mode=$MODE $EXTRA_PARAMS"
 
 HOSTS_FILE="hosts/$ENV"
 
