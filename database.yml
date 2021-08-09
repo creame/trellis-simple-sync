@@ -7,8 +7,8 @@
     project: "{{ wordpress_sites[site] }}"
     project_current: "{{ www_root }}/{{ site }}/current"
     project_local_path: "{{ (lookup('env', 'USER') == 'vagrant') | ternary(project_current, project.local_path) }}"
-    sync_file: "db-sync.sql.gz"
-    backup_file: "db-backup-{{ ansible_date_time.iso8601_basic_short }}.sql.gz"
+    sync_file: "db-sync.sql"
+    backup_file: "db-backup-{{ ansible_date_time.iso8601_basic_short }}.sql"
     dev_host: "{{ groups['development'] | first }}"
     domain_dev: "{{ hostvars[dev_host].wordpress_sites[site].site_hosts.0.canonical }}"
     domain_env: "{{ project.site_hosts.0.canonical }}"
@@ -23,33 +23,33 @@
 
     # PULL database
     - block:
-      - name: PULL > Export {{ env }} database
-        shell: wp db export - | gzip > {{ sync_file }}
+      - name: PULL > Export & gzip {{ env }} database
+        shell: 'wp db export {{ sync_file }} --skip-plugins --skip-themes && gzip -q {{ sync_file }}'
         args:
           chdir: "{{ project_current }}"
 
       - name: PULL > Pull dump file from {{ env }} to development
         fetch:
-          src: "{{ project_current }}/{{ sync_file }}"
+          src: "{{ project_current }}/{{ sync_file }}.gz"
           dest: "{{ project_local_path }}/"
           flat: yes
 
       - name: PULL > Delete dump file from {{ env }}
         file:
           state: absent
-          path: "{{ project_current }}/{{ sync_file }}"
+          path: "{{ project_current }}/{{ sync_file }}.gz"
 
       - name: PULL > Backup development database
         connection: local
-        shell: vagrant ssh -- 'cd {{ project_current }} && wp db export - | gzip > {{ backup_file }}'
+        shell: vagrant ssh -- 'cd {{ project_current }} && wp db export {{ backup_file }} --skip-plugins --skip-themes && gzip -q {{ backup_file }}'
 
       - name: PULL > Reset development database
         connection: local
         shell: vagrant ssh -- 'cd {{ project_current }} && wp db reset --yes --skip-plugins --skip-themes'
 
-      - name: PULL > Import database dump on development
+      - name: PULL > Gunzip & import database dump on development
         connection: local
-        shell: vagrant ssh -- 'cd {{ project_current }} && gzip -c -d {{ sync_file }} | wp db import -'
+        shell: vagrant ssh -- 'cd {{ project_current }} && gunzip -q {{ sync_file }}.gz && wp db import {{ sync_file }} --skip-plugins --skip-themes'
 
       - name: PULL > Delete dump file on development
         connection: local
@@ -81,23 +81,23 @@
 
     # PUSH database
     - block:
-      - name: PUSH > Export development database
+      - name: PUSH > Export & gzip development database
         connection: local
-        shell: vagrant ssh -- 'cd {{ project_current }} && wp db export - | gzip > {{ sync_file }}'
+        shell: vagrant ssh -- 'cd {{ project_current }} && wp db export {{ sync_file }} --skip-plugins --skip-themes && gzip -q {{ sync_file }}'
 
       - name: PUSH > Push dump file from development to {{ env }}
         copy:
-          src: "{{ project_local_path }}/{{ sync_file }}"
+          src: "{{ project_local_path }}/{{ sync_file }}.gz"
           dest: "{{ project_current }}/"
 
       - name: PUSH > Delete dump file from development
         connection: local
         file:
           state: absent
-          path: "{{ project_local_path }}/{{ sync_file }}"
+          path: "{{ project_local_path }}/{{ sync_file }}.gz"
 
       - name: PUSH > Backup {{ env }} database
-        shell: wp db export - | gzip > {{ backup_file }}
+        shell: 'wp db export {{ backup_file }} --skip-plugins --skip-themes && gzip -q {{ backup_file }}'
         args:
           chdir: "{{ project_current }}"
 
@@ -106,8 +106,8 @@
         args:
           chdir: "{{ project_current }}"
 
-      - name: PUSH > Import database dump on {{ env }}
-        shell: gzip -c -d {{ sync_file }} | wp db import -
+      - name: PUSH > Gunzip & import database dump on {{ env }}
+        shell: 'gunzip -q {{ sync_file }}.gz && wp db import {{ sync_file }} --skip-plugins --skip-themes'
         args:
           chdir: "{{ project_current }}"
 
