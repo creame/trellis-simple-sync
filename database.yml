@@ -14,6 +14,8 @@
     domain_env: "{{ project.site_hosts.0.canonical }}"
     url_dev: "{{ hostvars[dev_host].wordpress_sites[site].ssl.enabled | ternary('https', 'http') }}://{{ domain_dev }}"
     url_env: "{{ project.ssl.enabled | ternary('https', 'http') }}://{{ domain_env }}"
+    skip_guids_option: "--skip-columns=guid"
+    skip_guids_column: "{{ skip_guids | default('true') }}"
 
   tasks:
     - name: Abort if environment variable is equal to development
@@ -23,6 +25,11 @@
 
     # PULL database
     - block:
+      - name: Modify GUID columns
+        set_fact:
+          skip_guids_option: ""
+        when: "skip_guids_column == 'false'"
+
       - name: PULL > Export & gzip {{ env }} database
         shell: 'wp db export {{ sync_file }} --skip-plugins --skip-themes && gzip -q {{ sync_file }}'
         args:
@@ -59,11 +66,11 @@
 
       - name: PULL > Replace urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables --skip-plugins --skip-themes"
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' {{ skip_guids_option }} --all-tables --skip-plugins --skip-themes"
 
       - name: PULL > Replace protocol-relative urls "//{{ domain_env }}" => "//{{ domain_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables --skip-plugins --skip-themes"
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' {{ skip_guids_option }} --all-tables --skip-plugins --skip-themes"
 
       - name: PULL > Replace emails "@{{ domain_env }}" => "@{{ domain_dev }}" on development
         connection: local
@@ -117,12 +124,12 @@
           path: "{{ project_current }}/{{ sync_file }}"
 
       - name: PUSH > Replace urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
-        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables --skip-plugins --skip-themes
+        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' {{ skip_guids_option }} --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
       - name: PUSH > Replace protocol-relative urls "//{{ domain_dev }}" => "//{{ domain_env }}" on {{ env }}
-        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables --skip-plugins --skip-themes
+        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' {{ skip_guids_option }} --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
