@@ -59,11 +59,11 @@
 
       - name: PULL > Replace urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --all-tables --skip-plugins --skip-themes"
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '{{ url_env }}' '{{ url_dev }}' --skip-columns=guid --all-tables --skip-plugins --skip-themes"
 
       - name: PULL > Replace protocol-relative urls "//{{ domain_env }}" => "//{{ domain_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --all-tables --skip-plugins --skip-themes"
+        shell: vagrant ssh -- "cd {{ project_current }} && wp search-replace '//{{ domain_env }}' '//{{ domain_dev }}' --skip-columns=guid --all-tables --skip-plugins --skip-themes"
 
       - name: PULL > Replace emails "@{{ domain_env }}" => "@{{ domain_dev }}" on development
         connection: local
@@ -117,12 +117,12 @@
           path: "{{ project_current }}/{{ sync_file }}"
 
       - name: PUSH > Replace urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
-        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --all-tables --skip-plugins --skip-themes
+        command: wp search-replace '{{ url_dev }}' '{{ url_env }}' --skip-columns=guid --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
       - name: PUSH > Replace protocol-relative urls "//{{ domain_dev }}" => "//{{ domain_env }}" on {{ env }}
-        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --all-tables --skip-plugins --skip-themes
+        command: wp search-replace '//{{ domain_dev }}' '//{{ domain_env }}' --skip-columns=guid --all-tables --skip-plugins --skip-themes
         args:
           chdir: "{{ project_current }}"
 
