@@ -31,6 +31,13 @@ Examples:\
 `./bin/sync.sh prod example.com media down`\
 `./bin/sync.sh prod example.com all up`
 
+## Skipping GUIDs
+
+Skipping the GUID column is the default behaviour as it can have unwanted effects on production environments. If you are sure you want to replace GUID URLs, for example if you are deploying a site to production for the first time, you can prevent skipping GUIDs with `--extra-vars "skip_guids=false"`.
+
+Example:\
+`./bin/sync.sh prod example.com db up --extra-vars "skip_guids=false"`
+
 ## Notes
 * Tested up to Ansible 2.6.1
 * Replace Elementor urls on database sync (if installed).
