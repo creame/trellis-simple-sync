@@ -15,7 +15,7 @@
     url_dev: "{{ hostvars[dev_host].wordpress_sites[site].ssl.enabled | ternary('https', 'http') }}://{{ domain_dev }}"
     url_env: "{{ project.ssl.enabled | ternary('https', 'http') }}://{{ domain_env }}"
     skip_guids_option: "--skip-columns=guid"
-    skip_guids_column: "{{ skip_guids | default('true') }}"
+    skip_guids_column: "{{ skip_guids | default('false') }}"
 
   tasks:
     - name: Abort if environment variable is equal to development
