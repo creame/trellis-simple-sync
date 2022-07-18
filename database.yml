@@ -71,11 +71,15 @@
 
       - name: PULL > Replace Elementor urls "{{ url_env }}" => "{{ url_dev }}" on development
         connection: local
-        shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}' --skip-themes || cd ."
+        shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor replace_urls' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_env }}' '{{ url_dev }}' --skip-themes || cd ."
 
       - name: PULL > Cache flush on development
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp cache flush"
+
+      - name: PULL > Elementor flush CSS on development
+        connection: local
+        shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor flush_css' && [ $? -eq 0 ] && wp elementor flush_css --skip-themes || cd ."
 
       when: mode is not defined or mode == "pull"
 
@@ -132,12 +136,17 @@
           chdir: "{{ project_current }}"
 
       - name: PUSH > Replace Elementor urls "{{ url_dev }}" => "{{ url_env }}" on {{ env }}
-        shell: wp cli has-command 'elementor' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}' --skip-themes || cd .
+        shell: wp cli has-command 'elementor replace_urls' && [ $? -eq 0 ] && wp elementor replace_urls '{{ url_dev }}' '{{ url_env }}' --skip-themes || cd .
         args:
           chdir: "{{ project_current }}"
 
       - name: PUSH > Cache flush on {{ env }}
         command: wp cache flush
+        args:
+          chdir: "{{ project_current }}"
+
+      - name: PUSH > Elementor flush CSS on {{ env }}
+        shell: wp cli has-command 'elementor flush_css' && [ $? -eq 0 ] && wp elementor flush_css --skip-themes || cd .
         args:
           chdir: "{{ project_current }}"
 
