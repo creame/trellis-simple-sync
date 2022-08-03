@@ -23,8 +23,8 @@
         msg: "ERROR: development is not a valid environment for this mode (you can't push/pull from development to development)."
       when: env == "development"
 
-    # PULL database
-    - block:
+    - name: PULL database
+      block:
       - name: Modify GUID columns
         set_fact:
           skip_guids_option: ""
@@ -87,11 +87,10 @@
       - name: PULL > Elementor flush CSS on development
         connection: local
         shell: vagrant ssh -- "cd {{ project_current }} && wp cli has-command 'elementor flush_css' && [ $? -eq 0 ] && wp elementor flush_css --skip-themes || cd ."
-
       when: mode is not defined or mode == "pull"
 
-    # PUSH database
-    - block:
+    - name: PUSH database
+      block:
       - name: PUSH > Export & gzip development database
         connection: local
         shell: vagrant ssh -- 'cd {{ project_current }} && wp db export {{ sync_file }} --skip-plugins --skip-themes && gzip -q {{ sync_file }}'
@@ -156,5 +155,4 @@
         shell: wp cli has-command 'elementor flush_css' && [ $? -eq 0 ] && wp elementor flush_css --skip-themes || cd .
         args:
           chdir: "{{ project_current }}"
-
       when: mode is defined and mode == "push"
