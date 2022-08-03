@@ -23,13 +23,13 @@
         msg: "ERROR: development is not a valid environment for this mode (you can't push/pull from development to development)."
       when: env == "development"
 
+    - name: Modify GUID columns
+      set_fact:
+        skip_guids_option: ""
+      when: "skip_guids_column == 'false'"
+
     - name: PULL database
       block:
-      - name: Modify GUID columns
-        set_fact:
-          skip_guids_option: ""
-        when: "skip_guids_column == 'false'"
-
       - name: PULL > Export & gzip {{ env }} database
         shell: 'wp db export {{ sync_file }} --skip-plugins --skip-themes && gzip -q {{ sync_file }}'
         args:
